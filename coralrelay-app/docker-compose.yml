@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: unibridge-app_server_1
+      APP_HOST: coralrelay-app_server_1
       APP_PORT: 3000
     image: getumbrel/umbrel-app-proxy:v1.0.1
     restart: on-failure

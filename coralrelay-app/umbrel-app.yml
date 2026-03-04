@@ -1,8 +1,8 @@
 manifestVersion: 1
-id: unibridge-app
-name: Uni API Bridge
+id: coralrelay-app
+name: CoralRelay
 tagline: Translate university AI API to OpenAI-compatible format
-icon: https://raw.githubusercontent.com/przib/CoralRelay/main/unibridge-app/icon.svg
+icon: https://raw.githubusercontent.com/przib/CoralRelay/main/coralrelay-app/icon.svg
 category: ai
 version: "1.0.0"
 port: 3000

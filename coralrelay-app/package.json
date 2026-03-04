@@ -1,5 +1,5 @@
 {
-  "name": "uni-api-bridge",
+  "name": "coralrelay",
   "version": "1.0.0",
   "description": "Translation proxy: OpenAI-compatible API to university AI Toolbox",
   "main": "server.js",

@@ -1,10 +1,10 @@
-# Uni API Bridge — Umbrel Community App Store
+# CoralRelay — Umbrel Community App Store
 
 A translation proxy that exposes your university's AI Toolbox as an OpenAI-compatible API endpoint. Allows OpenClaw and other tools to use your university's AI models seamlessly.
 
 ## Installation
 
-Add this repository as a Community App Store in your Umbrel dashboard, then install "Uni API Bridge" from the store.
+Add this repository as a Community App Store in your Umbrel dashboard, then install "CoralRelay" from the store.
 
 ## Configuration
 

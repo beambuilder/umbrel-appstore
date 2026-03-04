@@ -282,6 +282,6 @@ app.post("/v1/chat/completions", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`UniBridge proxy listening on port ${PORT}`);
+  console.log(`CoralRelay listening on port ${PORT}`);
   console.log(`University API URL: ${UNI_API_URL || "(not set)"}`);
 });
