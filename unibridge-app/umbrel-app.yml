@@ -1,0 +1,27 @@
+manifestVersion: 1
+id: unibridge-app
+name: Uni API Bridge
+tagline: Translate university AI API to OpenAI-compatible format
+icon: https://raw.githubusercontent.com/przib/CoralRelay/main/unibridge-app/icon.svg
+category: ai
+version: "1.0.0"
+port: 3000
+description: >-
+  A translation proxy that exposes your university's AI Toolbox as an
+  OpenAI-compatible API endpoint. Allows OpenClaw and other tools to use
+  your university's free AI models seamlessly.
+
+  Configure your university API URL and key in the environment variables,
+  then point any OpenAI-compatible client at this app.
+developer: przib
+website: ""
+submitter: przib
+submission: ""
+repo: "https://github.com/przib/CoralRelay"
+support: "https://github.com/przib/CoralRelay/issues"
+gallery: []
+releaseNotes: "Initial release"
+dependencies: []
+path: ""
+deterministicPassword: false
+torOnly: false

@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: unibridge-app_server_1
+      APP_PORT: 3000
+    image: getumbrel/umbrel-app-proxy:v1.0.1
+    restart: on-failure
+    networks:
+      default:
+        ipv4_address: $APP_PROXY_IP
+
+  server:
+    build: .
+    restart: on-failure
+    environment:
+      UNI_API_URL: ${UNI_API_URL:-}
+      UNI_API_KEY: ${UNI_API_KEY:-}
+      PORT: 3000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    networks:
+      default:
+        ipv4_address: $APP_IP

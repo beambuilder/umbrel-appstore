@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uni API Bridge</title>
+<style>
+  :root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f3460;
+    --bg-input: #232340;
+    --bg-user-msg: #0f3460;
+    --bg-assistant-msg: #232340;
+    --bg-error-msg: #3e1620;
+    --text-primary: #e8e8f0;
+    --text-secondary: #a0a0b8;
+    --text-muted: #6a6a80;
+    --border-color: #2a2a48;
+    --accent: #5865f2;
+    --accent-hover: #4752c4;
+    --green: #43b581;
+    --red: #f04747;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --max-width: 800px;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #app {
+    width: 100%;
+    max-width: var(--max-width);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    transition: background 0.3s;
+  }
+
+  .status-dot.connected {
+    background: var(--green);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-dot.checking {
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  /* ── Messages ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  #messages::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  #messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #messages::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    line-height: 1.55;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    animation: fadeIn 0.25s ease-out;
+  }
+
+  .message.user {
+    align-self: flex-end;
+    background: var(--bg-user-msg);
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant {
+    align-self: flex-start;
+    background: var(--bg-assistant-msg);
+    border-bottom-left-radius: 4px;
+  }
+
+  .message.error {
+    align-self: center;
+    background: var(--bg-error-msg);
+    color: var(--red);
+    font-size: 0.88rem;
+    text-align: center;
+    max-width: 90%;
+  }
+
+  .message code {
+    font-family: var(--font-mono);
+    background: rgba(0, 0, 0, 0.25);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+
+  .message pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  .message pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+
+  /* ── Typing indicator ── */
+  .typing-indicator {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: bounce 1.2s ease-in-out infinite;
+  }
+
+  .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    text-align: center;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+
+  /* ── Input area ── */
+  /* ── Model selector ── */
+  .model-bar {
+    padding: 8px 20px 0;
+    flex-shrink: 0;
+  }
+
+  #model-select {
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  #model-select:focus {
+    border-color: var(--accent);
+  }
+
+  .input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    transition: border-color 0.2s;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--accent);
+  }
+
+  #chat-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    max-height: 150px;
+    overflow-y: auto;
+    rows: 1;
+  }
+
+  #chat-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  #send-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  #send-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  #send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  #send-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    header { padding: 12px 16px; }
+    #messages { padding: 14px; }
+    .input-area { padding: 12px 14px; }
+    .message { max-width: 92%; font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Uni API Bridge</h1>
+    <div class="status">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Checking...</span>
+    </div>
+  </header>
+
+  <div id="messages">
+    <div class="empty-state" id="empty-state">
+      Send a message to start a conversation.
+    </div>
+  </div>
+
+  <div class="model-bar">
+    <select id="model-select">
+      <option value="gpt-5.2">gpt-5.2</option>
+      <option value="gpt-5.1">gpt-5.1</option>
+      <option value="gpt-5">gpt-5</option>
+      <option value="o3">o3</option>
+      <option value="gpt-4.1">gpt-4.1</option>
+      <option value="o4-mini" selected>o4-mini</option>
+      <option value="o3-mini">o3-mini</option>
+      <option value="o1">o1</option>
+      <option value="gpt-4o-mini">gpt-4o-mini</option>
+      <option value="gpt-4o">gpt-4o</option>
+      <option value="gpt-4-turbo">gpt-4-turbo</option>
+      <option value="gpt-4">gpt-4</option>
+      <option value="gpt-3.5-turbo-0125">gpt-3.5-turbo-0125</option>
+    </select>
+  </div>
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="chat-input" rows="1" placeholder="Type a message..." autocomplete="off"></textarea>
+      <button id="send-btn" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── DOM refs ── */
+  const messagesEl  = document.getElementById("messages");
+  const emptyState  = document.getElementById("empty-state");
+  const inputEl     = document.getElementById("chat-input");
+  const sendBtn     = document.getElementById("send-btn");
+  const statusDot   = document.getElementById("status-dot");
+  const statusText  = document.getElementById("status-text");
+  const modelSelect = document.getElementById("model-select");
+
+  /* ── State ── */
+  let conversationHistory = [];  // { role, content }
+  let isStreaming = false;
+
+  /* ── Status polling ── */
+  async function checkStatus() {
+    statusDot.classList.add("checking");
+    try {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      if (data.status === "connected") {
+        statusDot.classList.add("connected");
+        statusText.textContent = "Connected";
+      } else {
+        statusDot.classList.remove("connected");
+        statusText.textContent = "Disconnected";
+      }
+    } catch {
+      statusDot.classList.remove("connected");
+      statusText.textContent = "Disconnected";
+    } finally {
+      statusDot.classList.remove("checking");
+    }
+  }
+
+  checkStatus();
+  setInterval(checkStatus, 30000);
+
+  /* ── Helpers ── */
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function hideEmptyState() {
+    if (emptyState) emptyState.style.display = "none";
+  }
+
+  /** Very minimal Markdown-ish rendering: code blocks, inline code. */
+  function renderContent(raw) {
+    let html = escapeHtml(raw);
+    // fenced code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function (_m, _lang, code) {
+      return '<pre><code>' + code + '</code></pre>';
+    });
+    // inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return html;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+  }
+
+  function addMessageEl(role, content) {
+    hideEmptyState();
+    const el = document.createElement("div");
+    el.className = "message " + role;
+    el.innerHTML = renderContent(content);
+    messagesEl.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+
+  function createTypingIndicator() {
+    const el = document.createElement("div");
+    el.className = "message assistant";
+    el.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+    messagesEl.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+
+  /* ── Auto-grow textarea ── */
+  inputEl.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 150) + "px";
+  });
+
+  /* ── Send logic ── */
+  function canSend() {
+    return inputEl.value.trim().length > 0 && !isStreaming;
+  }
+
+  function setStreaming(val) {
+    isStreaming = val;
+    sendBtn.disabled = val;
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || isStreaming) return;
+
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+    inputEl.focus();
+
+    // Add user message to UI and history
+    addMessageEl("user", text);
+    conversationHistory.push({ role: "user", content: text });
+
+    setStreaming(true);
+
+    // Show typing indicator
+    const typingEl = createTypingIndicator();
+    let assistantContent = "";
+
+    try {
+      const res = await fetch("/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: modelSelect.value,
+          messages: conversationHistory.map(function (m) {
+            return { role: m.role, content: m.content };
+          }),
+          stream: true
+        })
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(function () { return ""; });
+        throw new Error("HTTP " + res.status + (errBody ? ": " + errBody : ""));
+      }
+
+      // Replace typing indicator with real message bubble
+      typingEl.innerHTML = "";
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        // Keep the last (possibly incomplete) line in the buffer
+        buffer = lines.pop() || "";
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line || !line.startsWith("data:")) continue;
+
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") continue;
+
+          try {
+            const json = JSON.parse(payload);
+            const delta = json.choices && json.choices[0] && json.choices[0].delta;
+            if (delta && delta.content) {
+              assistantContent += delta.content;
+              typingEl.innerHTML = renderContent(assistantContent);
+              scrollToBottom();
+            }
+          } catch (_e) {
+            // Skip unparseable chunks
+          }
+        }
+      }
+
+      // Process any remaining buffer
+      if (buffer.trim()) {
+        const line = buffer.trim();
+        if (line.startsWith("data:")) {
+          const payload = line.slice(5).trim();
+          if (payload !== "[DONE]") {
+            try {
+              const json = JSON.parse(payload);
+              const delta = json.choices && json.choices[0] && json.choices[0].delta;
+              if (delta && delta.content) {
+                assistantContent += delta.content;
+                typingEl.innerHTML = renderContent(assistantContent);
+                scrollToBottom();
+              }
+            } catch (_e) {}
+          }
+        }
+      }
+
+      if (!assistantContent) {
+        typingEl.remove();
+        addMessageEl("error", "Received an empty response.");
+      } else {
+        conversationHistory.push({ role: "assistant", content: assistantContent });
+      }
+
+    } catch (err) {
+      typingEl.remove();
+      addMessageEl("error", "Error: " + (err.message || "Network request failed"));
+    } finally {
+      setStreaming(false);
+    }
+  }
+
+  /* ── Event listeners ── */
+  sendBtn.addEventListener("click", sendMessage);
+
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (canSend()) sendMessage();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
