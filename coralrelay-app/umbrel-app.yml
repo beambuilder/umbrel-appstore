@@ -14,14 +14,16 @@ description: >-
   Configure your university API URL and key in the environment variables,
   then point any OpenAI-compatible client at this app.
 developer: przib
-website: ""
+website: https://github.com/przib/CoralRelay
 submitter: przib
-submission: ""
-repo: "https://github.com/przib/CoralRelay"
-support: "https://github.com/przib/CoralRelay/issues"
-gallery: []
-releaseNotes: "Initial release"
+submission: https://github.com/przib/CoralRelay
+repo: https://github.com/przib/CoralRelay
+support: https://github.com/przib/CoralRelay/issues
+gallery:
+  - https://i.imgur.com/yyVG0Jb.jpeg
+releaseNotes: >-
+  Initial release
 dependencies: []
 path: ""
-deterministicPassword: false
-torOnly: false
+defaultUsername: ""
+defaultPassword: ""
