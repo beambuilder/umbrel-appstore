@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   server:
-    image: ghcr.io/przib/coralrelay:latest
+    image: ghcr.io/beambuilder/coralrelay:latest
     user: "1000:1000"
     init: true
     restart: on-failure
